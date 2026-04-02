@@ -107,6 +107,181 @@
     .recordings a:hover {
       text-decoration: underline;
     }
+    .presence {
+      margin-bottom: 1.5rem;
+    }
+    .presence-panel {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1rem;
+      border-radius: 1rem;
+      border: 1px solid rgba(226, 232, 240, 0.08);
+    }
+    .presence-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 9999px;
+      display: inline-block;
+      background: #f97316;
+    }
+    .status-dot.online {
+      background: #22c55e;
+    }
+    .status-dot.offline {
+      background: #f87171;
+    }
+    .presence-panel button {
+      padding: 0.65rem 0.85rem;
+      border: none;
+      border-radius: 0.75rem;
+      background: #0ea5e9;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .presence-panel button:hover {
+      background: #0284c7;
+    }
+    .rooms {
+      margin-bottom: 1.5rem;
+    }
+    .rooms-panel {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1rem;
+      border-radius: 1rem;
+      border: 1px solid rgba(226, 232, 240, 0.08);
+    }
+    .room-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .roomBtn {
+      padding: 0.75rem 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 0.75rem;
+      background: #1e293b;
+      color: #e2e8f0;
+      cursor: pointer;
+      transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+    .roomBtn:hover {
+      transform: translateY(-1px);
+      background: #334155;
+    }
+    .roomBtn.selected {
+      background: #2563eb;
+      border-color: #2563eb;
+      color: white;
+    }
+    .rooms-panel button#joinRoomBtn {
+      padding: 0.85rem 1rem;
+      border: none;
+      border-radius: 0.75rem;
+      background: #22c55e;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .rooms-panel button#joinRoomBtn:hover {
+      background: #16a34a;
+    }
+    .view-mode {
+      margin-bottom: 1.5rem;
+    }
+    .view-panel {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1rem;
+      border-radius: 1rem;
+      border: 1px solid rgba(226, 232, 240, 0.08);
+    }
+    .view-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .viewBtn {
+      padding: 0.75rem 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 0.75rem;
+      background: #1e293b;
+      color: #e2e8f0;
+      cursor: pointer;
+      transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+    .viewBtn:hover {
+      transform: translateY(-1px);
+      background: #334155;
+    }
+    .viewBtn.selected {
+      background: #2563eb;
+      border-color: #2563eb;
+      color: white;
+    }
+    #mainViewVideo {
+      width: 100%;
+      min-height: 280px;
+      background: #0f172a;
+      border-radius: 0.75rem;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+    }
+    .login-overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.9);
+      z-index: 50;
+      padding: 1rem;
+    }
+    .login-box {
+      width: min(440px, 100%);
+      background: #111827;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 24px 80px rgba(15, 23, 42, 0.55);
+    }
+    .login-box h2 {
+      margin-top: 0;
+      margin-bottom: 0.75rem;
+      color: #f8fafc;
+    }
+    .login-input {
+      width: 100%;
+      padding: 0.95rem 1rem;
+      border-radius: 0.75rem;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      background: #0f172a;
+      color: #e2e8f0;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+    .login-button {
+      width: 100%;
+      padding: 0.95rem 1rem;
+      border: none;
+      border-radius: 0.75rem;
+      background: #22c55e;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .login-button:hover {
+      background: #16a34a;
+    }
+    .login-error {
+      color: #f87171;
+      margin-top: 0.75rem;
+    }
   </style>
 </head>
 <body>
@@ -114,6 +289,16 @@
     <h1>Zoom-like Share & Record App</h1>
     <p>Use camera, microphone, and screen share from your browser.</p>
   </header>
+
+  <div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+      <h2>Login required</h2>
+      <p>Enter the secret code to access the room and camera controls.</p>
+      <input class="login-input" id="loginCodeInput" type="text" placeholder="Enter code" maxlength="10" />
+      <button class="login-button" id="loginBtn">Login</button>
+      <p class="login-error" id="loginError"></p>
+    </div>
+  </div>
 
   <main>
     <section class="controls">
@@ -123,6 +308,45 @@
       <button id="recordBtn" disabled>Start Recording</button>
       <button id="stopRecordBtn" disabled>Stop Recording</button>
       <span id="status">Ready</span>
+    </section>
+
+    <section class="presence">
+      <div class="presence-panel">
+        <h2>Presence</h2>
+        <div class="presence-info">
+          <span class="status-dot online" id="userStatusDot"></span>
+          <span id="userStatusText">You are online</span>
+        </div>
+        <p>Users online: <strong id="usersOnlineCount">1</strong></p>
+        <button id="togglePresenceBtn">Go offline</button>
+      </div>
+    </section>
+
+    <section class="rooms">
+      <div class="rooms-panel">
+        <h2>Join a room</h2>
+        <div class="room-buttons">
+          <button class="roomBtn selected" data-room="Classroom 1">Classroom 1</button>
+          <button class="roomBtn" data-room="Classroom 2">Classroom 2</button>
+          <button class="roomBtn" data-room="Classroom 3">Classroom 3</button>
+          <button class="roomBtn" data-room="Classroom 4">Classroom 4</button>
+          <button class="roomBtn" data-room="Classroom 5">Classroom 5</button>
+        </div>
+        <p id="selectedRoomText">Selected room: Classroom 1</p>
+        <button id="joinRoomBtn">Join selected room</button>
+      </div>
+    </section>
+
+    <section class="view-mode">
+      <div class="view-panel">
+        <h2>Main View</h2>
+        <div class="view-buttons">
+          <button class="viewBtn selected" data-view="camera">Camera</button>
+          <button class="viewBtn" data-view="screen">Shared Screen</button>
+          <button class="viewBtn" data-view="mixed">Mixed</button>
+        </div>
+        <video id="mainViewVideo" autoplay muted playsinline></video>
+      </div>
     </section>
 
     <section class="videos">
@@ -160,12 +384,28 @@
     const recordingPreview = document.getElementById('recordingPreview');
     const micAudio = document.getElementById('micAudio');
     const recordingList = document.getElementById('recordingList');
+    const userStatusDot = document.getElementById('userStatusDot');
+    const userStatusText = document.getElementById('userStatusText');
+    const usersOnlineCount = document.getElementById('usersOnlineCount');
+    const togglePresenceBtn = document.getElementById('togglePresenceBtn');
+    const roomButtons = document.querySelectorAll('.roomBtn');
+    const selectedRoomText = document.getElementById('selectedRoomText');
+    const joinRoomBtn = document.getElementById('joinRoomBtn');
+    const viewButtons = document.querySelectorAll('.viewBtn');
+    const mainViewVideo = document.getElementById('mainViewVideo');
+    const loginOverlay = document.getElementById('loginOverlay');
+    const loginCodeInput = document.getElementById('loginCodeInput');
+    const loginBtn = document.getElementById('loginBtn');
+    const loginError = document.getElementById('loginError');
 
     let cameraStream = null;
+    let selectedRoom = 'Classroom 1';
     let screenStream = null;
     let micStream = null;
     let mediaRecorder = null;
     let recordedChunks = [];
+    let currentViewMode = 'camera';
+    const secretCode = '007';
 
     function updateStatus(message) {
       statusText.textContent = message;
@@ -254,6 +494,78 @@
       }
     }
 
+    function getViewStream() {
+      if (currentViewMode === 'screen') {
+        return screenStream;
+      }
+      if (currentViewMode === 'mixed') {
+        return getMixedStream();
+      }
+      return cameraStream;
+    }
+
+    function updateMainView() {
+      const viewStream = getViewStream();
+      mainViewVideo.srcObject = viewStream || null;
+      if (!viewStream) {
+        const fallback = currentViewMode === 'screen' ? 'shared screen' : currentViewMode === 'mixed' ? 'mixed view' : 'camera';
+        updateStatus(`Start ${fallback} to see it here.`);
+      }
+    }
+
+    function setViewMode(mode) {
+      currentViewMode = mode;
+      viewButtons.forEach((button) => {
+        button.classList.toggle('selected', button.dataset.view === mode);
+      });
+      updateMainView();
+      updateStatus(`Showing ${mode === 'screen' ? 'shared screen' : mode === 'mixed' ? 'mixed view' : 'camera'} in main view.`);
+    }
+
+    function setUserPresence(isOnline) {
+      if (isOnline) {
+        userStatusDot.classList.add('online');
+        userStatusDot.classList.remove('offline');
+        userStatusText.textContent = 'You are online';
+        togglePresenceBtn.textContent = 'Go offline';
+        usersOnlineCount.textContent = '1';
+      } else {
+        userStatusDot.classList.add('offline');
+        userStatusDot.classList.remove('online');
+        userStatusText.textContent = 'You are offline';
+        togglePresenceBtn.textContent = 'Go online';
+        usersOnlineCount.textContent = '0';
+      }
+    }
+
+    function selectRoom(room) {
+      selectedRoom = room;
+      roomButtons.forEach((button) => {
+        if (button.dataset.room === room) {
+          button.classList.add('selected');
+        } else {
+          button.classList.remove('selected');
+        }
+      });
+      selectedRoomText.textContent = `Selected room: ${room}`;
+      updateStatus(`Ready to join ${room}`);
+    }
+
+    function joinRoom() {
+      updateStatus(`Joined ${selectedRoom}`);
+    }
+
+    function attemptLogin() {
+      const code = loginCodeInput.value.trim();
+      if (code === secretCode) {
+        loginOverlay.style.display = 'none';
+        updateStatus('Logged in successfully. Welcome!');
+        loginError.textContent = '';
+      } else {
+        loginError.textContent = 'Incorrect code. Use 007 to login.';
+      }
+    }
+
     function createRecordingLink(blob) {
       const url = URL.createObjectURL(blob);
       const listItem = document.createElement('li');
@@ -307,11 +619,41 @@
       }
     }
 
-    cameraBtn.addEventListener('click', startCamera);
+    togglePresenceBtn.addEventListener('click', () => {
+      const isOnline = userStatusText.textContent !== 'You are online';
+      setUserPresence(isOnline);
+    });
+
+    loginBtn.addEventListener('click', attemptLogin);
+    loginCodeInput.addEventListener('keypress', (event) => {
+      if (event.key === 'Enter') {
+        attemptLogin();
+      }
+    });
+
+    roomButtons.forEach((button) => {
+      button.addEventListener('click', () => selectRoom(button.dataset.room));
+    });
+    joinRoomBtn.addEventListener('click', joinRoom);
+    viewButtons.forEach((button) => {
+      button.addEventListener('click', () => setViewMode(button.dataset.view));
+    });
+
+    cameraBtn.addEventListener('click', () => {
+      startCamera();
+      setViewMode('camera');
+    });
     microphoneBtn.addEventListener('click', startMicrophone);
-    screenBtn.addEventListener('click', shareScreen);
+    screenBtn.addEventListener('click', () => {
+      shareScreen();
+      setViewMode('screen');
+    });
     recordBtn.addEventListener('click', startRecording);
     stopRecordBtn.addEventListener('click', stopRecording);
+
+    setUserPresence(true);
+    selectRoom('Classroom 1');
+    setViewMode('camera');
 
     window.addEventListener('beforeunload', () => {
       [cameraStream, micStream, screenStream].forEach((stream) => {
