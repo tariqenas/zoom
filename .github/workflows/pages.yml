@@ -14,12 +14,12 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v4
+      - uses: actions/configure-pages@v5
       - name: Prepare Pages artifact
         run: |
           mkdir -p output
           cp index.html output/
-      - uses: actions/upload-pages-artifact@v1
+      - uses: actions/upload-pages-artifact@v2
         with:
           path: output
       - uses: actions/deploy-pages@v1
