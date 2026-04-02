@@ -350,6 +350,46 @@
       margin: 0;
       color: #cbd5e1;
     }
+    .participants {
+      margin-bottom: 1.5rem;
+    }
+    .participant-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+    .participant-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(226, 232, 240, 0.08);
+      border-radius: 1rem;
+      padding: 1rem;
+    }
+    .participant-card h3 {
+      margin-top: 0;
+      margin-bottom: 0.75rem;
+      font-size: 1rem;
+    }
+    .participant-card video,
+    .participant-placeholder {
+      width: 100%;
+      min-height: 140px;
+      background: #0f172a;
+      border-radius: 0.75rem;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      object-fit: cover;
+    }
+    .participant-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      font-size: 0.95rem;
+      padding: 1rem;
+    }
+    .participant-card p {
+      margin: 0.75rem 0 0;
+      color: #cbd5e1;
+    }
   </style>
 </head>
 <body>
@@ -436,6 +476,33 @@
       </div>
     </section>
 
+    <section class="participants">
+      <div class="participant-grid">
+        <div class="participant-card">
+          <h3>You (local)</h3>
+          <video id="participantLocalCam" autoplay muted playsinline></video>
+          <p>Local camera stream being shared to the room.</p>
+        </div>
+        <div class="participant-card">
+          <h3>You (screen)</h3>
+          <video id="participantLocalScreen" autoplay muted playsinline></video>
+          <p>Local shared screen appears here for room participants.</p>
+        </div>
+        <div class="participant-card">
+          <h3>Alice</h3>
+          <div class="participant-placeholder">Alice camera feed placeholder</div>
+          <div class="participant-placeholder">Alice screen share placeholder</div>
+          <p>A simulated participant view for room layout.</p>
+        </div>
+        <div class="participant-card">
+          <h3>Bob</h3>
+          <div class="participant-placeholder">Bob camera feed placeholder</div>
+          <div class="participant-placeholder">Bob screen share placeholder</div>
+          <p>Room tile for another participant.</p>
+        </div>
+      </div>
+    </section>
+
     <section class="videos">
       <div class="video-panel">
         <h2>Camera Preview</h2>
@@ -489,6 +556,8 @@
     const selectedPartnerText = document.getElementById('selectedPartnerText');
     const viewPartnerBtn = document.getElementById('viewPartnerBtn');
     const remotePartnerNote = document.getElementById('remotePartnerNote');
+    const participantLocalCam = document.getElementById('participantLocalCam');
+    const participantLocalScreen = document.getElementById('participantLocalScreen');
 
     let cameraStream = null;
     let selectedRoom = 'Room Josee';
@@ -535,6 +604,7 @@
         updateStatus('Camera started.');
         recordBtn.disabled = false;
         updateRecordingPreview();
+        updateParticipantTiles();
       } catch (error) {
         console.error(error);
         updateStatus('Unable to start camera.');
@@ -571,8 +641,10 @@
           screenVideo.srcObject = null;
           updateStatus('Screen share ended.');
           updateRecordingPreview();
+          updateParticipantTiles();
         });
         updateRecordingPreview();
+        updateParticipantTiles();
       } catch (error) {
         console.error(error);
         updateStatus('Unable to share screen.');
@@ -605,6 +677,12 @@
         const fallback = currentViewMode === 'screen' ? 'shared screen' : currentViewMode === 'mixed' ? 'mixed view' : 'camera';
         updateStatus(`Start ${fallback} to see it here.`);
       }
+      updateParticipantTiles();
+    }
+
+    function updateParticipantTiles() {
+      participantLocalCam.srcObject = cameraStream || null;
+      participantLocalScreen.srcObject = screenStream || null;
     }
 
     function setViewMode(mode) {
@@ -620,7 +698,7 @@
       if (isOnline) {
         userStatusDot.classList.add('online');
         userStatusDot.classList.remove('offline');
-        userStatusText.textContent = 'You are online';
+        userStatusText.textContent = `${userName} is online`;
         togglePresenceBtn.textContent = 'Go offline';
         usersOnlineCount.textContent = '1';
       } else {
@@ -680,6 +758,7 @@
       loginError.textContent = '';
       userStatusText.textContent = `${userName} is online`;
       updateStatus(`Logged in as ${userName}. Welcome!`);
+      updateParticipantTiles();
     }
 
     function createRecordingLink(blob) {
