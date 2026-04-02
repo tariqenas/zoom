@@ -1,0 +1,25 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  pages:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v4
+      - name: Prepare Pages artifact
+        run: |
+          mkdir -p output
+          cp index.html output/
+      - uses: actions/upload-pages-artifact@v1
+        with:
+          path: output
+      - uses: actions/deploy-pages@v1

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zoom-like Share & Record Demo</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+    header {
+      padding: 1.5rem;
+      text-align: center;
+      background: linear-gradient(135deg, #1d4ed8, #0f172a);
+      border-bottom: 1px solid rgba(226, 232, 240, 0.08);
+    }
+    header h1 {
+      margin: 0 0 0.5rem;
+      font-size: 2rem;
+    }
+    header p {
+      margin: 0;
+      color: #cbd5e1;
+    }
+    main {
+      padding: 1.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .controls button {
+      padding: 0.85rem 1rem;
+      border: none;
+      border-radius: 0.75rem;
+      background-color: #2563eb;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+    .controls button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .controls button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      background-color: #1d4ed8;
+    }
+    .controls span {
+      flex: 1 1 auto;
+      min-width: 180px;
+      color: #f8fafc;
+    }
+    .videos {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    .video-panel {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1rem;
+      border-radius: 1rem;
+      border: 1px solid rgba(226, 232, 240, 0.08);
+    }
+    .video-panel h2 {
+      margin-top: 0;
+      margin-bottom: 0.75rem;
+      font-size: 1.1rem;
+    }
+    video {
+      width: 100%;
+      min-height: 200px;
+      background: #0f172a;
+      border-radius: 0.75rem;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+    }
+    .recordings {
+      margin-top: 1.5rem;
+    }
+    .recordings h2 {
+      margin-top: 0;
+    }
+    .recordings ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .recordings li {
+      margin-bottom: 0.75rem;
+    }
+    .recordings a {
+      color: #60a5fa;
+      text-decoration: none;
+    }
+    .recordings a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Zoom-like Share & Record App</h1>
+    <p>Use camera, microphone, and screen share from your browser.</p>
+  </header>
+
+  <main>
+    <section class="controls">
+      <button id="cameraBtn">Start Camera</button>
+      <button id="microphoneBtn">Start Microphone</button>
+      <button id="screenBtn">Share Screen / Window</button>
+      <button id="recordBtn" disabled>Start Recording</button>
+      <button id="stopRecordBtn" disabled>Stop Recording</button>
+      <span id="status">Ready</span>
+    </section>
+
+    <section class="videos">
+      <div class="video-panel">
+        <h2>Camera Preview</h2>
+        <video id="cameraVideo" autoplay muted playsinline></video>
+      </div>
+      <div class="video-panel">
+        <h2>Screen / Window Preview</h2>
+        <video id="screenVideo" autoplay muted playsinline></video>
+      </div>
+      <div class="video-panel">
+        <h2>Mixed Preview (Recording Stream)</h2>
+        <video id="recordingPreview" autoplay controls muted playsinline></video>
+      </div>
+    </section>
+
+    <section class="recordings">
+      <h2>Recorded Files</h2>
+      <ul id="recordingList"></ul>
+    </section>
+  </main>
+
+  <audio id="micAudio" autoplay hidden></audio>
+  <script>
+    const cameraBtn = document.getElementById('cameraBtn');
+    const microphoneBtn = document.getElementById('microphoneBtn');
+    const screenBtn = document.getElementById('screenBtn');
+    const recordBtn = document.getElementById('recordBtn');
+    const stopRecordBtn = document.getElementById('stopRecordBtn');
+    const statusText = document.getElementById('status');
+
+    const cameraVideo = document.getElementById('cameraVideo');
+    const screenVideo = document.getElementById('screenVideo');
+    const recordingPreview = document.getElementById('recordingPreview');
+    const micAudio = document.getElementById('micAudio');
+    const recordingList = document.getElementById('recordingList');
+
+    let cameraStream = null;
+    let screenStream = null;
+    let micStream = null;
+    let mediaRecorder = null;
+    let recordedChunks = [];
+
+    function updateStatus(message) {
+      statusText.textContent = message;
+    }
+
+    function getActiveVideoStream() {
+      return screenStream || cameraStream;
+    }
+
+    function getMixedStream() {
+      const videoStream = getActiveVideoStream();
+      if (!videoStream && !micStream) {
+        return null;
+      }
+
+      const mixed = new MediaStream();
+      if (videoStream) {
+        videoStream.getVideoTracks().forEach((track) => mixed.addTrack(track));
+      }
+      if (micStream) {
+        micStream.getAudioTracks().forEach((track) => mixed.addTrack(track));
+      }
+      return mixed;
+    }
+
+    async function startCamera() {
+      try {
+        if (cameraStream) {
+          cameraStream.getTracks().forEach((track) => track.stop());
+        }
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        cameraVideo.srcObject = cameraStream;
+        updateStatus('Camera started.');
+        recordBtn.disabled = false;
+        updateRecordingPreview();
+      } catch (error) {
+        console.error(error);
+        updateStatus('Unable to start camera.');
+      }
+    }
+
+    async function startMicrophone() {
+      try {
+        if (micStream) {
+          micStream.getTracks().forEach((track) => track.stop());
+        }
+        micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        micAudio.srcObject = micStream;
+        updateStatus('Microphone started.');
+        recordBtn.disabled = false;
+        updateRecordingPreview();
+      } catch (error) {
+        console.error(error);
+        updateStatus('Unable to access microphone.');
+      }
+    }
+
+    async function shareScreen() {
+      try {
+        if (screenStream) {
+          screenStream.getTracks().forEach((track) => track.stop());
+        }
+        screenStream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: 'always' }, audio: false });
+        screenVideo.srcObject = screenStream;
+        updateStatus('Screen sharing started.');
+        recordBtn.disabled = false;
+        screenStream.getVideoTracks()[0].addEventListener('ended', () => {
+          screenStream = null;
+          screenVideo.srcObject = null;
+          updateStatus('Screen share ended.');
+          updateRecordingPreview();
+        });
+        updateRecordingPreview();
+      } catch (error) {
+        console.error(error);
+        updateStatus('Unable to share screen.');
+      }
+    }
+
+    function updateRecordingPreview() {
+      const mixed = getMixedStream();
+      if (mixed) {
+        recordingPreview.srcObject = mixed;
+      } else {
+        recordingPreview.srcObject = null;
+      }
+    }
+
+    function createRecordingLink(blob) {
+      const url = URL.createObjectURL(blob);
+      const listItem = document.createElement('li');
+      const link = document.createElement('a');
+      const date = new Date().toLocaleString();
+
+      link.href = url;
+      link.download = `zoom-demo-${Date.now()}.webm`;
+      link.textContent = `Download recording (${date})`;
+      listItem.appendChild(link);
+      recordingList.prepend(listItem);
+    }
+
+    function startRecording() {
+      const mixed = getMixedStream();
+      if (!mixed) {
+        updateStatus('Please start a camera or screen stream and microphone before recording.');
+        return;
+      }
+
+      recordedChunks = [];
+      try {
+        mediaRecorder = new MediaRecorder(mixed, { mimeType: 'video/webm; codecs=vp9' });
+      } catch (error) {
+        mediaRecorder = new MediaRecorder(mixed);
+      }
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordedChunks.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        createRecordingLink(blob);
+        updateStatus('Recording stopped and saved.');
+        stopRecordBtn.disabled = true;
+        recordBtn.disabled = false;
+      };
+
+      mediaRecorder.start();
+      updateStatus('Recording in progress...');
+      recordBtn.disabled = true;
+      stopRecordBtn.disabled = false;
+    }
+
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+    }
+
+    cameraBtn.addEventListener('click', startCamera);
+    microphoneBtn.addEventListener('click', startMicrophone);
+    screenBtn.addEventListener('click', shareScreen);
+    recordBtn.addEventListener('click', startRecording);
+    stopRecordBtn.addEventListener('click', stopRecording);
+
+    window.addEventListener('beforeunload', () => {
+      [cameraStream, micStream, screenStream].forEach((stream) => {
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop());
+        }
+      });
+    });
+  </script>
+</body>
+</html>
