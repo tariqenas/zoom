@@ -282,6 +282,74 @@
       color: #f87171;
       margin-top: 0.75rem;
     }
+    .remote-partners {
+      margin-bottom: 1.5rem;
+    }
+    .remote-panel {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1rem;
+      border-radius: 1rem;
+      border: 1px solid rgba(226, 232, 240, 0.08);
+    }
+    .partner-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .partnerBtn {
+      padding: 0.75rem 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 0.75rem;
+      background: #1e293b;
+      color: #e2e8f0;
+      cursor: pointer;
+      transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+    .partnerBtn:hover {
+      transform: translateY(-1px);
+      background: #334155;
+    }
+    .partnerBtn.selected {
+      background: #2563eb;
+      border-color: #2563eb;
+      color: white;
+    }
+    .remote-panel button#viewPartnerBtn {
+      padding: 0.85rem 1rem;
+      border: none;
+      border-radius: 0.75rem;
+      background: #0ea5e9;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 1rem;
+    }
+    .remote-panel button#viewPartnerBtn:hover {
+      background: #0284c7;
+    }
+    .remote-view {
+      background: rgba(15, 23, 42, 0.8);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      border: 1px dashed rgba(96, 165, 250, 0.4);
+    }
+    .remote-placeholder {
+      width: 100%;
+      min-height: 180px;
+      background: #0f172a;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      font-size: 0.95rem;
+      margin-bottom: 0.75rem;
+    }
+    .remote-view p {
+      margin: 0;
+      color: #cbd5e1;
+    }
   </style>
 </head>
 <body>
@@ -293,7 +361,8 @@
   <div class="login-overlay" id="loginOverlay">
     <div class="login-box">
       <h2>Login & join room</h2>
-      <p>Enter code <strong>007</strong> to access Room Josee and start the meeting.</p>
+      <p>Enter code <strong>007</strong> and your name to access Room Josee.</p>
+      <input class="login-input" id="loginNameInput" type="text" placeholder="Your name" maxlength="30" />
       <input class="login-input" id="loginCodeInput" type="text" placeholder="Enter code 007" maxlength="10" />
       <button class="login-button" id="loginBtn">Login</button>
       <p class="login-error" id="loginError"></p>
@@ -335,6 +404,23 @@
         </div>
         <p id="selectedRoomText">Selected room: Room Josee</p>
         <button id="joinRoomBtn">Join selected room</button>
+      </div>
+    </section>
+
+    <section class="remote-partners">
+      <div class="remote-panel">
+        <h2>Remote Partners</h2>
+        <div class="partner-buttons">
+          <button class="partnerBtn selected" data-partner="Alice">Alice</button>
+          <button class="partnerBtn" data-partner="Bob">Bob</button>
+          <button class="partnerBtn" data-partner="Charlie">Charlie</button>
+        </div>
+        <p id="selectedPartnerText">Viewing partner: Alice</p>
+        <button id="viewPartnerBtn">View remote partner</button>
+        <div class="remote-view" id="remotePartnerView">
+          <div class="remote-placeholder">Remote partner video feed placeholder</div>
+          <p id="remotePartnerNote">No remote partner selected yet.</p>
+        </div>
       </div>
     </section>
 
@@ -395,9 +481,14 @@
     const viewButtons = document.querySelectorAll('.viewBtn');
     const mainViewVideo = document.getElementById('mainViewVideo');
     const loginOverlay = document.getElementById('loginOverlay');
+    const loginNameInput = document.getElementById('loginNameInput');
     const loginCodeInput = document.getElementById('loginCodeInput');
     const loginBtn = document.getElementById('loginBtn');
     const loginError = document.getElementById('loginError');
+    const partnerButtons = document.querySelectorAll('.partnerBtn');
+    const selectedPartnerText = document.getElementById('selectedPartnerText');
+    const viewPartnerBtn = document.getElementById('viewPartnerBtn');
+    const remotePartnerNote = document.getElementById('remotePartnerNote');
 
     let cameraStream = null;
     let selectedRoom = 'Room Josee';
@@ -406,6 +497,8 @@
     let mediaRecorder = null;
     let recordedChunks = [];
     let currentViewMode = 'camera';
+    let remotePartner = 'Alice';
+    let userName = 'Guest';
     const secretCode = '007';
 
     function updateStatus(message) {
@@ -556,15 +649,37 @@
       updateStatus(`Joined ${selectedRoom}`);
     }
 
+    function selectRemotePartner(partner) {
+      remotePartner = partner;
+      partnerButtons.forEach((button) => {
+        button.classList.toggle('selected', button.dataset.partner === partner);
+      });
+      selectedPartnerText.textContent = `Viewing partner: ${partner}`;
+      remotePartnerNote.textContent = `Ready to view ${partner}'s screen.`;
+      updateStatus(`Selected remote partner ${partner}.`);
+    }
+
+    function viewRemotePartner() {
+      remotePartnerNote.textContent = `Now viewing ${remotePartner}'s remote screen. This is a placeholder view.`;
+      updateStatus(`Viewing ${remotePartner}'s remote feed.`);
+    }
+
     function attemptLogin() {
+      const name = loginNameInput.value.trim();
       const code = loginCodeInput.value.trim();
-      if (code === secretCode) {
-        loginOverlay.style.display = 'none';
-        updateStatus('Logged in successfully. Welcome!');
-        loginError.textContent = '';
-      } else {
-        loginError.textContent = 'Incorrect code. Use 007 to login.';
+      if (!name) {
+        loginError.textContent = 'Please enter your name.';
+        return;
       }
+      if (code !== secretCode) {
+        loginError.textContent = 'Incorrect code. Use 007 to login.';
+        return;
+      }
+      userName = name;
+      loginOverlay.style.display = 'none';
+      loginError.textContent = '';
+      userStatusText.textContent = `${userName} is online`;
+      updateStatus(`Logged in as ${userName}. Welcome!`);
     }
 
     function createRecordingLink(blob) {
@@ -621,12 +736,17 @@
     }
 
     togglePresenceBtn.addEventListener('click', () => {
-      const isOnline = userStatusText.textContent !== 'You are online';
+      const isOnline = userStatusText.textContent !== `${userName} is online`;
       setUserPresence(isOnline);
     });
 
     loginBtn.addEventListener('click', attemptLogin);
     loginCodeInput.addEventListener('keypress', (event) => {
+      if (event.key === 'Enter') {
+        attemptLogin();
+      }
+    });
+    loginNameInput.addEventListener('keypress', (event) => {
       if (event.key === 'Enter') {
         attemptLogin();
       }
@@ -639,6 +759,10 @@
     viewButtons.forEach((button) => {
       button.addEventListener('click', () => setViewMode(button.dataset.view));
     });
+    partnerButtons.forEach((button) => {
+      button.addEventListener('click', () => selectRemotePartner(button.dataset.partner));
+    });
+    viewPartnerBtn.addEventListener('click', viewRemotePartner);
 
     cameraBtn.addEventListener('click', () => {
       startCamera();
@@ -654,6 +778,7 @@
 
     setUserPresence(true);
     selectRoom('Room Josee');
+    selectRemotePartner('Alice');
     setViewMode('camera');
 
     window.addEventListener('beforeunload', () => {
