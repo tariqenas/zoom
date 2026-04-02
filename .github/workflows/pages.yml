@@ -19,7 +19,7 @@ jobs:
         run: |
           mkdir -p output
           cp index.html output/
-      - uses: actions/upload-pages-artifact@v2
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: output
       - uses: actions/deploy-pages@v1
